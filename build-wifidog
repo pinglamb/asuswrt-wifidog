@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+cd /root
+
+echo "Symlinking toolchains"
+unlink /opt/brcm
+unlink /opt/brcm-arm
+ln -s /root/asuswrt-merlin/tools/brcm /opt/brcm
+ln -s /root/asuswrt-merlin/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3 /opt/brcm-arm
+export PATH=$PATH:/opt/brcm/hndtools-mipsel-linux/bin:/opt/brcm/hndtools-mipsel-uclibc/bin:/opt/brcm-arm/bin
+
+echo "Cloning Wifidog"
+rm -Rf wifidog-gateway
+git clone https://github.com/wifidog/wifidog-gateway
+cd wifidog-gateway
+git checkout 1.3.0
+
+echo "Running Wifidog Build Script"
+./autogen.sh
+export LD_LIBRARY_PATH=/opt/brcm-arm/lib
+./configure CC=arm-brcm-linux-uclibcgnueabi-gcc --enable-maintainer-mode --host arm-linux --prefix /opt
+make
+make install
+
+echo "Packaging"
+cd /opt
+tar czvf wifidog.tar.gz bin include lib share
+cp /opt/wifidog.tar.gz /root/
